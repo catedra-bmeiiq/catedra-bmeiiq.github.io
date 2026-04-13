@@ -1,4 +1,3 @@
-# iiqfacet.github.io
 # Cátedra de Balances de Materia y Energía e Introducción a la Ingeniería Química - Facultad de Ciencias Exactas y Tecnología - Universidad Nacional de Tucumán
 
 Este repositorio contiene el código fuente y los activos de la página web oficial de la cátedra. El sitio está diseñado para servir como plataforma educativa para los alumnos y como portal de vinculación tecnológica para servicios de consultoría externa.
