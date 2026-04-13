@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servicios Tecnológicos - Cátedra BME</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --azul-ing: #003366; --verde-service: #28a745; }
+        .navbar { background-color: var(--azul-ing) !important; }
+        .service-header { background: #e9ecef; padding: 60px 0; border-bottom: 4px solid var(--verde-service); }
+        .card-service { border: none; transition: all 0.3s; border-radius: 12px; }
+        .card-service:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.1); transform: translateY(-5px); }
+        .icon-circle { width: 60px; height: 60px; background: var(--azul-ing); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 1.5rem; }
+        .contact-cta { background: var(--azul-ing); color: white; padding: 40px; border-radius: 15px; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">BME - Ing. Química</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="equipo.html">Equipo Docente</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="servicios.html">Servicios al Exterior</a></li>
+                    <li class="nav-item"><a class="nav-link" href="alumnos.html">Alumnos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="herramientas.html">Herramientas</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="service-header text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">Servicios y Vinculación Tecnológica</h1>
+            <p class="lead text-muted">Soluciones avanzadas en ingeniería de procesos para la industria y el sector energético.</p>
+        </div>
+    </header>
+
+    <div class="container my-5">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 p-4 card-service">
+                    <div class="icon-circle">📈</div>
+                    <h4 class="fw-bold">Optimización de Procesos</h4>
+                    <p class="text-muted">Aplicación de programación matemática para la reducción de costos operativos, maximización de rendimientos y eficiencia energética en plantas complejas.</p>
+                    <ul class="small text-secondary">
+                        <li>Optimización de redes de intercambio calórico.</li>
+                        <li>Reducción de consumo de servicios auxiliares.</li>
+                        <li>Planificación óptima de la producción.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 p-4 card-service">
+                    <div class="icon-circle">💻</div>
+                    <h4 class="fw-bold">Modelado y Simulación</h4>
+                    <p class="text-muted">Desarrollo de modelos matemáticos y "gemelos digitales" para predecir el comportamiento de sistemas químicos ante cambios de variables.</p>
+                    <ul class="small text-secondary">
+                        <li>Simulación dinámica y estacionaria.</li>
+                        <li>Análisis de sensibilidad de procesos.</li>
+                        <li>Validación de datos industriales mediante balances.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 p-4 card-service">
+                    <div class="icon-circle">⚗️</div>
+                    <h4 class="fw-bold">Operaciones Unitarias</h4>
+                    <p class="text-muted">Asesoramiento técnico en el diseño, evaluación y diagnóstico de equipos de transferencia de masa y energía.</p>
+                    <ul class="small text-secondary">
+                        <li>Cálculo de columnas de destilación y absorción.</li>
+                        <li>Diseño de intercambiadores de calor.</li>
+                        <li>Evaluación de reactores químicos.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="contact-cta text-center">
+                    <h2 class="fw-bold mb-3">¿Busca optimizar su planta?</h2>
+                    <p class="mb-4">Nuestro equipo docente está disponible para consultorías técnicas, proyectos de I+D y capacitación in-company bajo convenios institucionales.</p>
+                    <a href="mailto:tu-email@universidad.edu.ar" class="btn btn-light btn-lg fw-bold px-5">Contactar con la Cátedra</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-4 bg-white border-top">
+        <p class="text-muted mb-0">Cátedra BME - Transferencia Tecnológica © 2024</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
