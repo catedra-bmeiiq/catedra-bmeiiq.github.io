@@ -8,11 +8,30 @@
     <style>
         :root { --azul-ing: #003366; }
         .navbar { background-color: var(--azul-ing) !important; }
-        .docente-card { border: none; border-radius: 15px; transition: transform 0.3s; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .docente-card:hover { transform: translateY(-5px); }
-        .badge-linea { background-color: #e9ecef; color: #495057; font-weight: 500; font-size: 0.8rem; margin-right: 5px; }
-        .tesis-box { font-size: 0.9rem; color: #6c757d; border-left: 3px solid var(--azul-ing); padding-left: 10px; margin-top: 10px; }
-        footer { background-color: #f8f9fa; padding: 30px 0; border-top: 1px solid #dee2e6; margin-top: 50px; }
+        .docente-card { 
+            border: 1px solid #e0e0e0; 
+            border-radius: 12px; 
+            transition: all 0.3s ease; 
+            background: #fff; 
+        }
+        .docente-card:hover { 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+            border-color: var(--azul-ing);
+        }
+        .badge-linea { 
+            background-color: #f1f3f5; 
+            color: #495057; 
+            font-weight: 500; 
+            border: 1px solid #dee2e6;
+        }
+        .tesis-box { 
+            font-size: 0.85rem; 
+            color: #555; 
+            border-left: 3px solid var(--azul-ing); 
+            padding-left: 12px; 
+            background-color: #fcfcfc;
+        }
+        footer { border-top: 1px solid #dee2e6; padding: 25px 0; margin-top: 50px; background: white; }
     </style>
 </head>
 <body class="bg-light">
@@ -23,97 +42,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="equipo.html">Equipo Docente</a></li>
-                    <li class="nav-item"><a class="nav-link" href="servicios.html">Servicios al Exterior</a></li>
-                    <li class="nav-item"><a class="nav-link" href="alumnos.html">Alumnos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="herramientas.html">Herramientas</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container my-5">
-        <div class="text-center mb-5">
-            <h1 class="fw-bold">Nuestro Equipo</h1>
-            <p class="text-muted">Especialistas en Modelado, Operaciones Unitarias y Optimización de Procesos</p>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 docente-card p-4 text-center">
-                    <div class="mb-3">
-                        <img src="https://via.placeholder.com/150" class="rounded-circle border" alt="Docente" width="120">
-                    </div>
-                    <h5 class="fw-bold mb-1">Nombre Docente 1</h5>
-                    <p class="text-primary small mb-3">Profesor Titular / Investigador</p>
-                    <div class="mb-3">
-                        <span class="badge badge-linea">Optimización Matemática</span>
-                        <span class="badge badge-linea">Python</span>
-                    </div>
-                    <div class="tesis-box text-start">
-                        <strong>Tesis:</strong> "Optimización de redes de intercambio calórico en plantas de refino".
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 docente-card p-4 text-center">
-                    <div class="mb-3">
-                        <img src="https://via.placeholder.com/150" class="rounded-circle border" alt="Docente" width="120">
-                    </div>
-                    <h5 class="fw-bold mb-1">Nombre Docente 2</h5>
-                    <p class="text-primary small mb-3">Jefe de Trabajos Prácticos</p>
-                    <div class="mb-3">
-                        <span class="badge badge-linea">Programación Lineal</span>
-                        <span class="badge badge-linea">Eficiencia</span>
-                    </div>
-                    <div class="tesis-box text-start">
-                        <strong>Tesis:</strong> "Modelado estocástico aplicado a la logística de productos químicos".
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 docente-card p-4 text-center">
-                    <div class="mb-3">
-                        <img src="https://via.placeholder.com/150" class="rounded-circle border" alt="Docente" width="120">
-                    </div>
-                    <h5 class="fw-bold mb-1">Nombre Docente 3</h5>
-                    <p class="text-primary small mb-3">Ayudante Diplomado</p>
-                    <div class="mb-3">
-                        <span class="badge badge-linea">Control de Procesos</span>
-                        <span class="badge badge-linea">IA</span>
-                    </div>
-                    <div class="tesis-box text-start">
-                        <strong>Tesis:</strong> "Algoritmos genéticos en la optimización de reactores químicos".
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 docente-card p-4 text-center border-primary shadow">
-                    <div class="mb-3">
-                        <img src="https://via.placeholder.com/150" class="rounded-circle border" alt="Docente" width="120">
-                    </div>
-                    <h5 class="fw-bold mb-1">Nombre Docente 4</h5>
-                    <p class="text-primary small mb-3">Profesor Adjunto</p>
-                    <div class="mb-3">
-                        <span class="badge badge-linea">Operaciones Unitarias</span>
-                        <span class="badge badge-linea">Modelado</span>
-                    </div>
-                    <div class="tesis-box text-start">
-                        <strong>Tesis:</strong> "Simulación dinámica de columnas de destilación reactiva".
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <footer class="text-center">
-        <div class="container">
-            <p class="text-muted small">Cátedra BME - © 2024</p>
-        </div>
-    </footer>
+                    <li class="nav-item
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
