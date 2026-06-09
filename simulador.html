@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Tanque - Estado Transitorio</title>
-    <!-- Tailwind CSS para diseño moderno -->
+    <title>Simulador de Tanque - Estado Transitorio (Optimizado)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js para gráficos en tiempo real -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .water-gradient {
@@ -28,67 +26,69 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+        /* Corrección para que Chart.js ocupe todo el ancho */
+        #mainChart {
+            width: 100% !important;
+            height: 100% !important;
+        }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800">
+<body class="bg-slate-100 font-sans text-slate-800">
 
-    <div class="container mx-auto p-4 max-w-6xl">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-slate-800">Simulador de Tanque de Agua</h1>
-            <p class="text-slate-500 italic">Estado Transitorio: dV/dt = Q<sub>in</sub> - k·V</p>
+    <div class="container mx-auto p-4 max-w-7xl">
+        <header class="mb-8 text-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h1 class="text-3xl font-bold text-slate-900">Simulador Dinámico de Tanque de Agua</h1>
+            <p class="text-slate-600 mt-1 italic">Estado Transitorio: dV/dt = Q<sub>entrada</sub> - k·V</p>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-8">
             
-            <!-- Columna 1: Controles -->
-            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-2">Controles</h2>
+            <div class="space-y-8">
                 
-                <!-- Slider Volumen Inicial -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium mb-1">Volumen Inicial (V₀): <span id="v0Val" class="font-bold text-blue-600">50</span> L</label>
-                    <input type="range" id="v0Slider" min="0" max="100" value="50" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                <div class="bg-white p-7 rounded-2xl shadow-lg border border-slate-200">
+                    <h2 class="text-xl font-semibold mb-6 text-slate-900 border-b border-slate-200 pb-3">Controles de Simulación</h2>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Volumen Inicial (V₀): <span id="v0Val" class="font-bold text-blue-700">50</span> L</label>
+                        <input type="range" id="v0Slider" min="0" max="100" value="50" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Flujo de Entrada (Q<sub>entrada</sub>): <span id="qinVal" class="font-bold text-blue-700">5</span> L/min</label>
+                        <input type="range" id="qinSlider" min="0" max="20" step="0.5" value="5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+
+                    <div class="flex gap-4 mb-8">
+                        <button id="btnStart" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md">Iniciar</button>
+                        <button id="btnReset" class="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md">Reiniciar</button>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
+                        <h3 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3">Datos en Tiempo Real</h3>
+                        <div class="flex justify-between text-sm"><span class="text-slate-700">Tiempo actual (t):</span> <span id="txtT" class="font-mono font-bold text-blue-700">0.0 min</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-700">Volumen actual (V):</span> <span id="txtV" class="font-mono font-bold text-blue-700">50.0 L</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>entrada</sub> configurada:</span> <span id="txtQin" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>salida</sub> instantánea (k·V):</span> <span id="txtQout" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
+                    </div>
                 </div>
 
-                <!-- Slider Q Entrada -->
-                <div class="mb-8">
-                    <label class="block text-sm font-medium mb-1">Flujo de Entrada (Q<sub>in</sub>): <span id="qinVal" class="font-bold text-blue-600">5</span> L/min</label>
-                    <input type="range" id="qinSlider" min="0" max="20" step="0.5" value="5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                </div>
-
-                <!-- Botones -->
-                <div class="flex gap-2 mb-8">
-                    <button id="btnStart" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Iniciar</button>
-                    <button id="btnReset" class="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Reiniciar</button>
-                </div>
-
-                <!-- Panel de Datos -->
-                <div class="bg-slate-100 p-4 rounded-lg border border-slate-200 space-y-2">
-                    <h3 class="text-sm font-bold uppercase text-slate-500 mb-2">Datos en Tiempo Real</h3>
-                    <div class="flex justify-between text-sm"><span>Tiempo (t):</span> <span id="txtT" class="font-mono font-bold text-blue-700">0.0 min</span></div>
-                    <div class="flex justify-between text-sm"><span>Volumen (V):</span> <span id="txtV" class="font-mono font-bold text-blue-700">50.0 L</span></div>
-                    <div class="flex justify-between text-sm"><span>Q<sub>entrada</sub>:</span> <span id="txtQin" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
-                    <div class="flex justify-between text-sm"><span>Q<sub>salida</sub> (k·V):</span> <span id="txtQout" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
+                <div class="bg-white p-7 rounded-2xl shadow-lg border border-slate-200 flex flex-col items-center">
+                    <h2 class="text-xl font-semibold mb-6 text-slate-900 border-b border-slate-200 pb-3 w-full text-center">Nivel Visual del Tanque</h2>
+                    
+                    <div id="overflowBadge" class="hidden overflow-alert bg-red-600 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4 shadow-md">¡DESBORDE DEL TANQUE!</div>
+                    
+                    <div class="tank-container w-56 h-72 bg-slate-50 flex flex-col justify-end shadow-inner">
+                        <div id="waterLevel" class="water-gradient w-full" style="height: 50%;"></div>
+                    </div>
+                    <div class="mt-4 font-bold text-slate-700 text-lg">Capacidad Máxima: 100 L</div>
                 </div>
             </div>
 
-            <!-- Columna 2: Visualización del Tanque -->
-            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 flex flex-col items-center justify-center">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-2 w-full text-center">Nivel del Tanque</h2>
-                
-                <div id="overflowBadge" class="hidden overflow-alert bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">¡DESBORDE!</div>
-                
-                <div class="tank-container w-48 h-64 bg-slate-50 flex flex-col justify-end">
-                    <!-- Agua -->
-                    <div id="waterLevel" class="water-gradient w-full" style="height: 50%;"></div>
+            <div class="bg-white p-7 rounded-2xl shadow-lg border border-slate-200 lg:col-span-1 min-h-[500px] flex flex-col">
+                <h2 class="text-xl font-semibold mb-6 text-slate-900 border-b border-slate-200 pb-3">Evolución Temporal del Volumen (V vs t)</h2>
+                <div class="flex-grow">
+                    <canvas id="mainChart"></canvas>
                 </div>
-                <div class="mt-2 font-bold text-slate-600 text-lg">Capacidad: 100L</div>
-            </div>
-
-            <!-- Columna 3: Gráfica -->
-            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 lg:col-span-1">
-                <h2 class="text-xl font-semibold mb-4 border-b pb-2">Gráfico V vs t</h2>
-                <canvas id="mainChart" height="300"></canvas>
             </div>
 
         </div>
@@ -98,13 +98,18 @@
         // --- Parámetros del Modelo ---
         const V_MAX = 100;
         const k = 0.1; // min^-1
-        const dt = 0.1; // Paso de tiempo min
+        const dt = 0.1; // Paso de tiempo de simulación (minutos)
         
+        // --- Estado de la Simulación ---
         let V = 50;
         let Qin = 5;
         let time = 0;
         let isRunning = false;
         let animationFrame;
+        
+        // --- Optimización del Gráfico ---
+        let chartUpdateCounter = 0;
+        const CHART_UPDATE_FREQUENCY = 10; // Actualizar gráfico cada 10 pasos (1 minuto de tiempo simulado)
 
         // --- Elementos del DOM ---
         const v0Slider = document.getElementById('v0Slider');
@@ -122,20 +127,19 @@
         const waterLevel = document.getElementById('waterLevel');
         const overflowBadge = document.getElementById('overflowBadge');
 
-        // --- Configuración de Chart.js ---
+        // --- Configuración de Chart.js Optimizado ---
         const ctx = document.getElementById('mainChart').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [],
                 datasets: [{
                     label: 'Volumen (L)',
-                    data: [],
+                    data: [], // Array de objetos {x: t, y: v}
                     borderColor: '#2563eb',
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.3,
+                    tension: 0.1, // Menor tensión para renderizado más rápido
                     pointRadius: 0
                 }]
             },
@@ -143,14 +147,23 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: { title: { display: true, text: 'Tiempo (min)' } },
+                    x: {
+                        type: 'linear', // Usar escala lineal para tiempo
+                        position: 'bottom',
+                        title: { display: true, text: 'Tiempo (min)', font: { size: 14 } },
+                        ticks: {
+                            callback: function(value) { return value.toFixed(1); }
+                        }
+                    },
                     y: { 
                         min: 0, 
                         max: 110,
-                        title: { display: true, text: 'Litros' } 
+                        title: { display: true, text: 'Litros', font: { size: 14 } } 
                     }
                 },
-                animation: false
+                animation: false,
+                normalized: true, // Optimización para conjuntos de datos grandes
+                spanGaps: true // Mejor rendimiento
             }
         });
 
@@ -165,7 +178,7 @@
             let dV = Qin - Qout;
             V = V + dV * dt;
 
-            // Límites físicos
+            // Límites físicos y alerta de desborde
             if (V < 0) V = 0;
             if (V > V_MAX) {
                 V = V_MAX;
@@ -176,8 +189,16 @@
 
             time += dt;
 
+            // Actualizar UI rápida (texto y visualización del tanque)
             updateUI();
-            updateChart();
+            
+            // --- Actualización diferida del gráfico (OPTIMIZACIÓN CLAVE) ---
+            chartUpdateCounter++;
+            if (chartUpdateCounter >= CHART_UPDATE_FREQUENCY) {
+                // Solo añadir punto y actualizar el gráfico cada n pasos de simulación
+                updateChart(time, V);
+                chartUpdateCounter = 0;
+            }
 
             // Controlamos la velocidad de simulación (aprox 10 FPS para que sea visible)
             setTimeout(() => {
@@ -197,16 +218,20 @@
             waterLevel.style.height = `${heightPercentage}%`;
         }
 
-        function updateChart() {
-            chart.data.labels.push(time.toFixed(1));
-            chart.data.datasets[0].data.push(V);
+        function updateChart(time, V) {
+            // Añadir nuevo punto de datos
+            chart.data.datasets[0].data.push({ x: time, y: V });
 
-            // Limitar puntos en gráfica para rendimiento
-            if (chart.data.labels.length > 200) {
-                chart.data.labels.shift();
-                chart.data.datasets[0].data.shift();
+            // --- Gestión de datos para evitar colapsos ---
+            // Limitar puntos en gráfica para rendimiento basándose en tiempo simulado, no conteo de puntos.
+            // Por ejemplo, mantener los últimos 100 minutos de simulación.
+            const MAX_TIME_HISTORY = 100;
+            while (chart.data.datasets[0].data.length > 0 && chart.data.datasets[0].data[0].x < time - MAX_TIME_HISTORY) {
+                chart.data.datasets[0].data.shift(); // Eliminar puntos antiguos
             }
-            chart.update();
+
+            // Actualizar gráfico sin animación para máximo rendimiento
+            chart.update('none');
         }
 
         // --- Eventos ---
@@ -224,13 +249,14 @@
             cancelAnimationFrame(animationFrame);
             
             time = 0;
+            chartUpdateCounter = 0;
             V = parseFloat(v0Slider.value);
             Qin = parseFloat(qinSlider.value);
             
             btnStart.innerText = "Iniciar";
-            btnStart.className = "flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-colors";
+            btnStart.className = "flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md";
             
-            chart.data.labels = [];
+            // Limpiar datos del gráfico
             chart.data.datasets[0].data = [];
             chart.update();
             
