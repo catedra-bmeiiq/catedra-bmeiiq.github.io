@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Tanque - Estado Transitorio (Fluido)</title>
+    <title>Simulador de Tanque - Torricelli vs Fijo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -37,7 +37,7 @@
     <div class="container mx-auto p-4 max-w-7xl">
         <header class="mb-8 text-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h1 class="text-3xl font-bold text-slate-900">Simulador Dinámico de Tanque de Agua</h1>
-            <p class="text-slate-600 mt-1 italic">Estado Transitorio: dV/dt = Q<sub>entrada</sub> - k·V</p>
+            <p class="text-slate-600 mt-1 italic" id="modelEquation">Estado Transitorio: dV/dt = Q<sub>entrada</sub> - Q<sub>salida</sub></p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-8">
@@ -45,34 +45,42 @@
             <div class="space-y-8">
                 
                 <div class="bg-white p-7 rounded-2xl shadow-lg border border-slate-200">
-                    <h2 class="text-xl font-semibold mb-6 text-slate-900 border-b border-slate-200 pb-3">Controles de Simulación</h2>
+                    <h2 class="text-xl font-semibold mb-4 text-slate-900 border-b border-slate-200 pb-3">Controles</h2>
                     
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Volumen Inicial (V₀): <span id="v0Val" class="font-bold text-blue-700">50</span> L</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Mecanismo de Salida:</label>
+                        <select id="outputModeSelect" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                            <option value="torricelli" selected>Gravedad / Válvula (Ley de Torricelli: k·√V)</option>
+                            <option value="fixed">Bomba / Flujo Constante (Qout fijo)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Volumen Inicial (V₀): <span id="v0Val" class="font-bold text-blue-700">50</span> L</label>
                         <input type="range" id="v0Slider" min="0" max="100" value="50" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                     </div>
 
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Flujo de Entrada (Q<sub>entrada</sub>): <span id="qinVal" class="font-bold text-blue-700">5.0</span> L/min</label>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Flujo de Entrada (Q<sub>entrada</sub>): <span id="qinVal" class="font-bold text-blue-700">5.0</span> L/min</label>
                         <input type="range" id="qinSlider" min="0" max="20" step="0.5" value="5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                     </div>
 
-                    <div class="mb-8">
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Constante de Salida (k): <span id="kVal" class="font-bold text-blue-700">0.10</span> min⁻¹</label>
-                        <input type="range" id="kSlider" min="0.01" max="0.5" step="0.01" value="0.1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <div class="mb-6">
+                        <label id="outputSliderLabel" class="block text-sm font-medium text-slate-700 mb-1">Constante de Salida (k): <span id="outputSliderVal" class="font-bold text-blue-700">1.00</span></label>
+                        <input type="range" id="outputSlider" min="0.1" max="3" step="0.05" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                     </div>
 
-                    <div class="flex gap-4 mb-8">
+                    <div class="flex gap-4 mb-6">
                         <button id="btnStart" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md">Iniciar</button>
                         <button id="btnReset" class="flex-1 bg-slate-500 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md">Reiniciar</button>
                     </div>
 
                     <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
-                        <h3 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3">Datos en Tiempo Real</h3>
+                        <h3 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2">Datos en Tiempo Real</h3>
                         <div class="flex justify-between text-sm"><span class="text-slate-700">Tiempo actual (t):</span> <span id="txtT" class="font-mono font-bold text-blue-700">0.0 min</span></div>
                         <div class="flex justify-between text-sm"><span class="text-slate-700">Volumen actual (V):</span> <span id="txtV" class="font-mono font-bold text-blue-700">50.0 L</span></div>
                         <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>entrada</sub> actual:</span> <span id="txtQin" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>salida</sub> calculada (k·V):</span> <span id="txtQout" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>salida</sub> actual:</span> <span id="txtQout" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
                     </div>
                 </div>
 
@@ -99,25 +107,33 @@
     </div>
 
     <script>
-        // --- Parámetros del Modelo (Modificables) ---
+        // --- Parámetros del Modelo ---
         const V_MAX = 100;
-        let k = 0.1; // Ahora es mutable
-        const dt = 0.1; // Paso de tiempo
+        const dt = 0.1; // Paso de tiempo de integración
         
         // --- Estado de la Simulación ---
         let V = 50;
         let Qin = 5;
+        let outputMode = 'torricelli'; // 'torricelli' o 'fixed'
+        let k_torricelli = 1.0; // Parámetro para k·√V
+        let Qout_fixed = 5.0;   // Parámetro para Qout constante
+        
         let time = 0;
         let isRunning = false;
         let animationFrame;
 
         // --- Elementos del DOM ---
+        const outputModeSelect = document.getElementById('outputModeSelect');
         const v0Slider = document.getElementById('v0Slider');
         const qinSlider = document.getElementById('qinSlider');
-        const kSlider = document.getElementById('kSlider'); // Nuevo
+        const outputSlider = document.getElementById('outputSlider');
+        
         const v0ValText = document.getElementById('v0Val');
         const qinValText = document.getElementById('qinVal');
-        const kValText = document.getElementById('kVal'); // Nuevo
+        const outputSliderVal = document.getElementById('outputSliderVal');
+        const outputSliderLabel = document.getElementById('outputSliderLabel');
+        const modelEquation = document.getElementById('modelEquation');
+        
         const btnStart = document.getElementById('btnStart');
         const btnReset = document.getElementById('btnReset');
         
@@ -141,7 +157,7 @@
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.05, // Líneas más directas para velocidad extrema
+                    tension: 0.05,
                     pointRadius: 0
                 }]
             },
@@ -166,17 +182,31 @@
             }
         });
 
-        // --- Lógica de Simulación ---
+        // --- Lógica Matemática del Modelo ---
+
+        function calculateQout() {
+            if (V <= 0) return 0; // Si no hay agua, la salida física es cero obligatoriamente
+            
+            if (outputMode === 'torricelli') {
+                return k_torricelli * Math.sqrt(V);
+            } else {
+                return Qout_fixed;
+            }
+        }
 
         function updateSimulation() {
             if (!isRunning) return;
 
-            // Ecuación diferencial
-            let Qout = k * V;
+            let Qout = calculateQout();
             let dV = Qin - Qout;
+            
+            // Integración de Euler: V(t + dt) = V(t) + dV * dt
             V = V + dV * dt;
 
-            if (V < 0) V = 0;
+            // Restricciones físicas estrictas
+            if (V <= 0) {
+                V = 0; // El tanque se vació por completo de forma limpia
+            }
             if (V > V_MAX) {
                 V = V_MAX;
                 overflowBadge.classList.remove('hidden');
@@ -186,23 +216,22 @@
 
             time += dt;
 
-            // Actualizar interfaz numérica y visual
-            updateUI();
-            
-            // CAMBIO: Fluidez total. Agrega puntos en cada ciclo de simulación sin borrar el pasado
+            // Actualizaciones
+            updateUI(Qout);
             updateChart(time, V);
 
-            // Ajuste fino del reloj interno (aprox 30ms para dar sensación de fluidez extrema de datos)
             setTimeout(() => {
                 animationFrame = requestAnimationFrame(updateSimulation);
             }, 30); 
         }
 
-        function updateUI() {
+        function updateUI(currentQout = null) {
+            let Qout = currentQout !== null ? currentQout : calculateQout();
+            
             txtT.innerText = time.toFixed(1) + " min";
             txtV.innerText = V.toFixed(2) + " L";
             txtQin.innerText = Qin.toFixed(2) + " L/min";
-            txtQout.innerText = (k * V).toFixed(2) + " L/min";
+            txtQout.innerText = Qout.toFixed(2) + " L/min";
 
             const heightPercentage = (V / V_MAX) * 100;
             waterLevel.style.height = `${heightPercentage}%`;
@@ -210,11 +239,39 @@
 
         function updateChart(time, V) {
             chart.data.datasets[0].data.push({ x: time, y: V });
-            // SE ELIMINÓ EL LÍMITE DE HISTORIAL: La curva ya no se borrará jamás durante la sesión.
             chart.update('none'); 
         }
 
-        // --- Eventos ---
+        // --- Configuración de la UI basada en el modo ---
+        function adaptUItoMode() {
+            outputMode = outputModeSelect.value;
+            if (outputMode === 'torricelli') {
+                modelEquation.innerHTML = "Estado Transitorio: dV/dt = Q<sub>entrada</sub> - k·√V";
+                outputSliderLabel.innerHTML = "Constante de Descarga (k): <span id='outputSliderVal' class='font-bold text-blue-700'>" + k_torricelli.toFixed(2) + "</span> min⁻¹·L^{0.5}";
+                outputSlider.min = 0.1;
+                outputSlider.max = 3.0;
+                outputSlider.step = 0.05;
+                outputSlider.value = k_torricelli;
+            } else {
+                modelEquation.innerHTML = "Estado Transitorio: dV/dt = Q<sub>entrada</sub> - Q<sub>salida, fijo</sub>";
+                outputSliderLabel.innerHTML = "Flujo de Salida Fijo (Q<sub>salida</sub>): <span id='outputSliderVal' class='font-bold text-blue-700'>" + Qout_fixed.toFixed(1) + "</span> L/min";
+                outputSlider.min = 0;
+                outputSlider.max = 20;
+                outputSlider.step = 0.5;
+                outputSlider.value = Qout_fixed;
+            }
+            updateUI();
+        }
+
+        // --- Manejo de Eventos ---
+
+        outputModeSelect.addEventListener('change', () => {
+            adaptUItoMode();
+            if (!isRunning && time > 0) {
+                // Si cambiaron el modo con la simulación pausada, refrescar UI
+                updateUI();
+            }
+        });
 
         btnStart.addEventListener('click', () => {
             isRunning = !isRunning;
@@ -231,7 +288,12 @@
             time = 0;
             V = parseFloat(v0Slider.value);
             Qin = parseFloat(qinSlider.value);
-            k = parseFloat(kSlider.value);
+            
+            if (outputMode === 'torricelli') {
+                k_torricelli = parseFloat(outputSlider.value);
+            } else {
+                Qout_fixed = parseFloat(outputSlider.value);
+            }
             
             btnStart.innerText = "Iniciar";
             btnStart.className = "flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md";
@@ -254,19 +316,23 @@
         qinSlider.addEventListener('input', (e) => {
             Qin = parseFloat(e.target.value);
             qinValText.innerText = Qin.toFixed(1);
-            txtQin.innerText = Qin.toFixed(2) + " L/min";
+            if (!isRunning) updateUI();
         });
 
-        // NUEVO: Evento para capturar los cambios en la constante k en tiempo real
-        kSlider.addEventListener('input', (e) => {
-            k = parseFloat(e.target.value);
-            kValText.innerText = k.toFixed(2);
-            txtQout.innerText = (k * V).toFixed(2) + " L/min";
+        outputSlider.addEventListener('input', (e) => {
+            let val = parseFloat(e.target.value);
+            if (outputMode === 'torricelli') {
+                k_torricelli = val;
+                document.getElementById('outputSliderVal').innerText = k_torricelli.toFixed(2);
+            } else {
+                Qout_fixed = val;
+                document.getElementById('outputSliderVal').innerText = Qout_fixed.toFixed(1);
+            }
+            if (!isRunning) updateUI();
         });
 
-        // Inicializar UI
-        updateUI();
-
+        // Inicialización
+        adaptUItoMode();
     </script>
 </body>
 </html>
