@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Tanque - Estado Transitorio (Optimizado)</title>
+    <title>Simulador de Tanque - Estado Transitorio (Fluido)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -26,7 +26,6 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
-        /* Corrección para que Chart.js ocupe todo el ancho */
         #mainChart {
             width: 100% !important;
             height: 100% !important;
@@ -53,9 +52,14 @@
                         <input type="range" id="v0Slider" min="0" max="100" value="50" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                     </div>
 
-                    <div class="mb-8">
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Flujo de Entrada (Q<sub>entrada</sub>): <span id="qinVal" class="font-bold text-blue-700">5</span> L/min</label>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Flujo de Entrada (Q<sub>entrada</sub>): <span id="qinVal" class="font-bold text-blue-700">5.0</span> L/min</label>
                         <input type="range" id="qinSlider" min="0" max="20" step="0.5" value="5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Constante de Salida (k): <span id="kVal" class="font-bold text-blue-700">0.10</span> min⁻¹</label>
+                        <input type="range" id="kSlider" min="0.01" max="0.5" step="0.01" value="0.1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                     </div>
 
                     <div class="flex gap-4 mb-8">
@@ -67,8 +71,8 @@
                         <h3 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3">Datos en Tiempo Real</h3>
                         <div class="flex justify-between text-sm"><span class="text-slate-700">Tiempo actual (t):</span> <span id="txtT" class="font-mono font-bold text-blue-700">0.0 min</span></div>
                         <div class="flex justify-between text-sm"><span class="text-slate-700">Volumen actual (V):</span> <span id="txtV" class="font-mono font-bold text-blue-700">50.0 L</span></div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>entrada</sub> configurada:</span> <span id="txtQin" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
-                        <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>salida</sub> instantánea (k·V):</span> <span id="txtQout" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>entrada</sub> actual:</span> <span id="txtQin" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-700">Q<sub>salida</sub> calculada (k·V):</span> <span id="txtQout" class="font-mono font-bold text-blue-700">5.0 L/min</span></div>
                     </div>
                 </div>
 
@@ -95,10 +99,10 @@
     </div>
 
     <script>
-        // --- Parámetros del Modelo ---
+        // --- Parámetros del Modelo (Modificables) ---
         const V_MAX = 100;
-        const k = 0.1; // min^-1
-        const dt = 0.1; // Paso de tiempo de simulación (minutos)
+        let k = 0.1; // Ahora es mutable
+        const dt = 0.1; // Paso de tiempo
         
         // --- Estado de la Simulación ---
         let V = 50;
@@ -106,16 +110,14 @@
         let time = 0;
         let isRunning = false;
         let animationFrame;
-        
-        // --- Optimización del Gráfico ---
-        let chartUpdateCounter = 0;
-        const CHART_UPDATE_FREQUENCY = 10; // Actualizar gráfico cada 10 pasos (1 minuto de tiempo simulado)
 
         // --- Elementos del DOM ---
         const v0Slider = document.getElementById('v0Slider');
         const qinSlider = document.getElementById('qinSlider');
+        const kSlider = document.getElementById('kSlider'); // Nuevo
         const v0ValText = document.getElementById('v0Val');
         const qinValText = document.getElementById('qinVal');
+        const kValText = document.getElementById('kVal'); // Nuevo
         const btnStart = document.getElementById('btnStart');
         const btnReset = document.getElementById('btnReset');
         
@@ -134,12 +136,12 @@
             data: {
                 datasets: [{
                     label: 'Volumen (L)',
-                    data: [], // Array de objetos {x: t, y: v}
+                    data: [], 
                     borderColor: '#2563eb',
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.1, // Menor tensión para renderizado más rápido
+                    tension: 0.05, // Líneas más directas para velocidad extrema
                     pointRadius: 0
                 }]
             },
@@ -148,12 +150,9 @@
                 maintainAspectRatio: false,
                 scales: {
                     x: {
-                        type: 'linear', // Usar escala lineal para tiempo
+                        type: 'linear',
                         position: 'bottom',
-                        title: { display: true, text: 'Tiempo (min)', font: { size: 14 } },
-                        ticks: {
-                            callback: function(value) { return value.toFixed(1); }
-                        }
+                        title: { display: true, text: 'Tiempo (min)', font: { size: 14 } }
                     },
                     y: { 
                         min: 0, 
@@ -162,8 +161,8 @@
                     }
                 },
                 animation: false,
-                normalized: true, // Optimización para conjuntos de datos grandes
-                spanGaps: true // Mejor rendimiento
+                normalized: true,
+                spanGaps: true
             }
         });
 
@@ -172,13 +171,11 @@
         function updateSimulation() {
             if (!isRunning) return;
 
-            // Ecuación diferencial: dV/dt = Qin - k*V
-            // Euler: V(t + dt) = V(t) + (Qin - k*V(t)) * dt
+            // Ecuación diferencial
             let Qout = k * V;
             let dV = Qin - Qout;
             V = V + dV * dt;
 
-            // Límites físicos y alerta de desborde
             if (V < 0) V = 0;
             if (V > V_MAX) {
                 V = V_MAX;
@@ -189,49 +186,32 @@
 
             time += dt;
 
-            // Actualizar UI rápida (texto y visualización del tanque)
+            // Actualizar interfaz numérica y visual
             updateUI();
             
-            // --- Actualización diferida del gráfico (OPTIMIZACIÓN CLAVE) ---
-            chartUpdateCounter++;
-            if (chartUpdateCounter >= CHART_UPDATE_FREQUENCY) {
-                // Solo añadir punto y actualizar el gráfico cada n pasos de simulación
-                updateChart(time, V);
-                chartUpdateCounter = 0;
-            }
+            // CAMBIO: Fluidez total. Agrega puntos en cada ciclo de simulación sin borrar el pasado
+            updateChart(time, V);
 
-            // Controlamos la velocidad de simulación (aprox 10 FPS para que sea visible)
+            // Ajuste fino del reloj interno (aprox 30ms para dar sensación de fluidez extrema de datos)
             setTimeout(() => {
                 animationFrame = requestAnimationFrame(updateSimulation);
-            }, 50); 
+            }, 30); 
         }
 
         function updateUI() {
-            // Textos numéricos
             txtT.innerText = time.toFixed(1) + " min";
             txtV.innerText = V.toFixed(2) + " L";
             txtQin.innerText = Qin.toFixed(2) + " L/min";
             txtQout.innerText = (k * V).toFixed(2) + " L/min";
 
-            // Visualización Tanque
             const heightPercentage = (V / V_MAX) * 100;
             waterLevel.style.height = `${heightPercentage}%`;
         }
 
         function updateChart(time, V) {
-            // Añadir nuevo punto de datos
             chart.data.datasets[0].data.push({ x: time, y: V });
-
-            // --- Gestión de datos para evitar colapsos ---
-            // Limitar puntos en gráfica para rendimiento basándose en tiempo simulado, no conteo de puntos.
-            // Por ejemplo, mantener los últimos 100 minutos de simulación.
-            const MAX_TIME_HISTORY = 100;
-            while (chart.data.datasets[0].data.length > 0 && chart.data.datasets[0].data[0].x < time - MAX_TIME_HISTORY) {
-                chart.data.datasets[0].data.shift(); // Eliminar puntos antiguos
-            }
-
-            // Actualizar gráfico sin animación para máximo rendimiento
-            chart.update('none');
+            // SE ELIMINÓ EL LÍMITE DE HISTORIAL: La curva ya no se borrará jamás durante la sesión.
+            chart.update('none'); 
         }
 
         // --- Eventos ---
@@ -249,14 +229,13 @@
             cancelAnimationFrame(animationFrame);
             
             time = 0;
-            chartUpdateCounter = 0;
             V = parseFloat(v0Slider.value);
             Qin = parseFloat(qinSlider.value);
+            k = parseFloat(kSlider.value);
             
             btnStart.innerText = "Iniciar";
             btnStart.className = "flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md";
             
-            // Limpiar datos del gráfico
             chart.data.datasets[0].data = [];
             chart.update();
             
@@ -274,8 +253,15 @@
 
         qinSlider.addEventListener('input', (e) => {
             Qin = parseFloat(e.target.value);
-            qinValText.innerText = Qin;
+            qinValText.innerText = Qin.toFixed(1);
             txtQin.innerText = Qin.toFixed(2) + " L/min";
+        });
+
+        // NUEVO: Evento para capturar los cambios en la constante k en tiempo real
+        kSlider.addEventListener('input', (e) => {
+            k = parseFloat(e.target.value);
+            kValText.innerText = k.toFixed(2);
+            txtQout.innerText = (k * V).toFixed(2) + " L/min";
         });
 
         // Inicializar UI
