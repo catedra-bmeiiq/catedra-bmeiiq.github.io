@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Tanque - Torricelli vs Fijo</title>
+    <title>Simulador de Tanque - Límites Corregidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -88,6 +88,7 @@
                     <h2 class="text-xl font-semibold mb-6 text-slate-900 border-b border-slate-200 pb-3 w-full text-center">Nivel Visual del Tanque</h2>
                     
                     <div id="overflowBadge" class="hidden overflow-alert bg-red-600 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4 shadow-md">¡DESBORDE DEL TANQUE!</div>
+                    <div id="emptyBadge" class="hidden overflow-alert bg-amber-500 text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4 shadow-md">¡TANQUE VACÍO!</div>
                     
                     <div class="tank-container w-56 h-72 bg-slate-50 flex flex-col justify-end shadow-inner">
                         <div id="waterLevel" class="water-gradient w-full" style="height: 50%;"></div>
@@ -109,14 +110,14 @@
     <script>
         // --- Parámetros del Modelo ---
         const V_MAX = 100;
-        const dt = 0.1; // Paso de tiempo de integración
+        const dt = 0.1; 
         
         // --- Estado de la Simulación ---
         let V = 50;
         let Qin = 5;
-        let outputMode = 'torricelli'; // 'torricelli' o 'fixed'
-        let k_torricelli = 1.0; // Parámetro para k·√V
-        let Qout_fixed = 5.0;   // Parámetro para Qout constante
+        let outputMode = 'torricelli'; 
+        let k_torricelli = 1.0; 
+        let Qout_fixed = 5.0;   
         
         let time = 0;
         let isRunning = false;
@@ -144,8 +145,9 @@
         
         const waterLevel = document.getElementById('waterLevel');
         const overflowBadge = document.getElementById('overflowBadge');
+        const emptyBadge = document.getElementById('emptyBadge'); // Nuevo
 
-        // --- Configuración de Chart.js Optimizado ---
+        // --- Configuración de Chart.js ---
         const ctx = document.getElementById('mainChart').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
@@ -182,14 +184,17 @@
             }
         });
 
-        // --- Lógica Matemática del Modelo ---
-
+        // --- CORRECCIÓN MATEMÁTICA ---
         function calculateQout() {
-            if (V <= 0) return 0; // Si no hay agua, la salida física es cero obligatoriamente
-            
             if (outputMode === 'torricelli') {
+                if (V <= 0) return 0;
                 return k_torricelli * Math.sqrt(V);
             } else {
+                // Modo Fijo con acoplamiento físico para evitar oscilaciones (Chattering)
+                if (V <= 0) {
+                    // Si el tanque está vacío, la bomba solo puede extraer el equivalente a la entrada
+                    return Math.min(Qout_fixed, Qin);
+                }
                 return Qout_fixed;
             }
         }
@@ -200,13 +205,16 @@
             let Qout = calculateQout();
             let dV = Qin - Qout;
             
-            // Integración de Euler: V(t + dt) = V(t) + dV * dt
             V = V + dV * dt;
 
-            // Restricciones físicas estrictas
+            // Gestión estricta de límites de volumen y alertas visuales
             if (V <= 0) {
-                V = 0; // El tanque se vació por completo de forma limpia
+                V = 0;
+                emptyBadge.classList.remove('hidden');
+            } else {
+                emptyBadge.classList.add('hidden');
             }
+
             if (V > V_MAX) {
                 V = V_MAX;
                 overflowBadge.classList.remove('hidden');
@@ -216,7 +224,6 @@
 
             time += dt;
 
-            // Actualizaciones
             updateUI(Qout);
             updateChart(time, V);
 
@@ -242,7 +249,6 @@
             chart.update('none'); 
         }
 
-        // --- Configuración de la UI basada en el modo ---
         function adaptUItoMode() {
             outputMode = outputModeSelect.value;
             if (outputMode === 'torricelli') {
@@ -267,10 +273,6 @@
 
         outputModeSelect.addEventListener('change', () => {
             adaptUItoMode();
-            if (!isRunning && time > 0) {
-                // Si cambiaron el modo con la simulación pausada, refrescar UI
-                updateUI();
-            }
         });
 
         btnStart.addEventListener('click', () => {
@@ -302,6 +304,11 @@
             chart.update();
             
             overflowBadge.classList.add('hidden');
+            emptyBadge.classList.add('hidden'); // Resetear alerta
+            
+            // Si al reiniciar arranca en 0, mostrar inmediatamente el cartel
+            if (V <= 0) emptyBadge.classList.remove('hidden');
+            
             updateUI();
         });
 
@@ -309,6 +316,11 @@
             v0ValText.innerText = e.target.value;
             if (!isRunning && time === 0) {
                 V = parseFloat(e.target.value);
+                if (V <= 0) {
+                    emptyBadge.classList.remove('hidden');
+                } else {
+                    emptyBadge.classList.add('hidden');
+                }
                 updateUI();
             }
         });
@@ -333,6 +345,7 @@
 
         // Inicialización
         adaptUItoMode();
+        if (V <= 0) emptyBadge.classList.remove('hidden');
     </script>
 </body>
 </html>
